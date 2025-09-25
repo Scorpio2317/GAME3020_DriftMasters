@@ -41,7 +41,8 @@ public class CarController : MonoBehaviour
         {
             wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase));
             wheels[1].collider.steerAngle = steer;
-        } else if (moveInput.x < 0)
+        }
+        else if (moveInput.x < 0)
         {
             wheels[0].collider.steerAngle = steer;
             wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (-trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase));
@@ -53,7 +54,21 @@ public class CarController : MonoBehaviour
 
         for (int i = 0; i < wheels.Length; i++)
         {
-            wheels[i].collider.transform.localRotation = Quaternion.Euler(0, wheels[i].collider.steerAngle, 0);
+            Quaternion quaternion;
+            Vector3 Pos;
+            wheels[i].collider.GetWorldPose(out Pos, out quaternion);
+            //wheels[i].collider.transform.rotation = quaternion;
+
+            Transform[] childTransforms = new Transform[wheels[i].collider.transform.childCount];
+            int index = 0;
+            foreach (var item in childTransforms)
+            {
+                wheels[i].collider.transform.GetChild(index).position = Pos;
+                wheels[i].collider.transform.GetChild(index).rotation = quaternion;
+                index++;
+            }
+            //wheels[i].collider.transform.position = Pos;
+            //wheels[i].collider.transform.localRotation = Quaternion.Euler(0, wheels[i].collider.steerAngle, 0);
         }
     }
 }
