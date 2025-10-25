@@ -2,26 +2,25 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[System.Serializable]
-public class Wheel
-{
-    public WheelCollider collider;
-    public WheelType wheelType;
-}
-
-
-[System.Serializable]
-public enum WheelType
-{
-    front, rear
-}
 
 public class CarController : MonoBehaviour
 {
+    public CarStats carStats;
+
     public Wheel[] wheels;
-    public Vector2 moveInput;
-    public float powerMultiplier = 1;
     public float maxSteer = 30, wheelBase = 2.5f, trackWidth = 1.5f;
+
+    #region common
+
+    private Vector2 moveInput;
+    public float wheelTurnLerpSpeed = 1;
+
+    #endregion
+
+    void Start()
+    {
+        carStats = transform.GetComponent<CarStats>();
+    }
 
     public void OnMove(InputValue value)
     {
@@ -29,27 +28,31 @@ public class CarController : MonoBehaviour
         moveInput = value.Get<Vector2>();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
+
+        if (!carStats)
+            return;
+
         foreach (var item in wheels)
         {
-            item.collider.motorTorque = moveInput.y * powerMultiplier;
+            item.collider.motorTorque = moveInput.y * carStats.MaxPowerNM;
         }
 
         float steer = moveInput.x * maxSteer;
         if (moveInput.x > 0)
         {
-            wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase));
-            wheels[1].collider.steerAngle = steer;
+            wheels[0].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle, Mathf.Rad2Deg * Mathf.Atan(wheelBase / (trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase)), Time.deltaTime * wheelTurnLerpSpeed);
+            wheels[1].collider.steerAngle = Mathf.Lerp(wheels[1].collider.steerAngle, steer, Time.deltaTime * wheelTurnLerpSpeed);
         }
         else if (moveInput.x < 0)
         {
-            wheels[0].collider.steerAngle = steer;
-            wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (-trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase));
+            wheels[0].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle, steer, Time.deltaTime * wheelTurnLerpSpeed);
+            wheels[1].collider.steerAngle = Mathf.Lerp(wheels[1].collider.steerAngle, Mathf.Rad2Deg * Mathf.Atan(wheelBase / (-trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase)), Time.deltaTime * wheelTurnLerpSpeed);
         }
         else
         {
-            wheels[0].collider.steerAngle = wheels[1].collider.steerAngle = 0;
+            wheels[0].collider.steerAngle = wheels[1].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle = wheels[1].collider.steerAngle, 0, Time.deltaTime * wheelTurnLerpSpeed);
         }
 
         for (int i = 0; i < wheels.Length; i++)
@@ -71,4 +74,19 @@ public class CarController : MonoBehaviour
             //wheels[i].collider.transform.localRotation = Quaternion.Euler(0, wheels[i].collider.steerAngle, 0);
         }
     }
+}
+
+
+[System.Serializable]
+public class Wheel
+{
+    public WheelCollider collider;
+    public WheelType wheelType;
+}
+
+
+[System.Serializable]
+public enum WheelType
+{
+    front, rear
 }

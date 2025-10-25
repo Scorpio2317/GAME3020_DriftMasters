@@ -1627,6 +1627,7 @@ GameObject:
   - component: {fileID: 755069544}
   - component: {fileID: 755069547}
   - component: {fileID: 755069546}
+  - component: {fileID: 755069548}
   - component: {fileID: 755069545}
   m_Layer: 0
   m_Name: GTR35
@@ -1711,6 +1712,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d197a6efecd9b242b72bcdb9b796c2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  carStats: {fileID: 755069548}
   wheels:
   - collider: {fileID: 235089061}
     wheelType: 0
@@ -1720,11 +1722,10 @@ MonoBehaviour:
     wheelType: 1
   - collider: {fileID: 1299803938}
     wheelType: 1
-  moveInput: {x: 0, y: 0}
-  powerMultiplier: 400
   maxSteer: 30
   wheelBase: 2.5
   trackWidth: 1.5
+  wheelTurnLerpSpeed: 10
 --- !u!54 &755069547
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1752,6 +1753,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &755069548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755069543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd725d66a09aa4a45a265557d2e478b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxPowerNM: 1200
 --- !u!1 &871080700
 GameObject:
   m_ObjectHideFlags: 0
