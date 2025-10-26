@@ -1,12 +1,10 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static UnityEditor.Progress;
 
 
 public class CarController : MonoBehaviour
 {
-    public CarStats carStats;
+    public CarStats stats;
     public Rigidbody rb;
     public Wheel[] wheels;
     public float maxSteer = 30, wheelBase = 2.5f, trackWidth = 1.5f;
@@ -16,7 +14,7 @@ public class CarController : MonoBehaviour
 
     private Vector2 moveInput;
     public float wheelTurnLerpSpeed = 1;
-    public bool SpacebarPressed;
+    private bool isSpacebarPressed;
 
     #endregion
 
@@ -24,7 +22,7 @@ public class CarController : MonoBehaviour
 
     void Start()
     {
-        carStats = GetComponent<CarStats>();
+        stats = GetComponent<CarStats>();
         rb = GetComponent<Rigidbody>();
     }
 
@@ -36,31 +34,18 @@ public class CarController : MonoBehaviour
 
     public void OnJump(InputValue value)
     {
-        SpacebarPressed = value.Get<float>() == 1; // this will set the spacebar pressed bool to true when input is 1
+        isSpacebarPressed = value.Get<float>() == 1; // this will set the spacebar pressed bool to true when input is 1
     }
 
     void FixedUpdate()
     {
 
-        if (!carStats)
+        if (!stats)
             return;
 
-        SpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
+        isSpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
         HandleSteering();
-
-        for (int i = 0; i < wheels.Length; i++)
-        {
-            if (i > 1)
-            {
-                //rear wheels
-                wheels[i].collider.motorTorque = SpacebarPressed ? 0 : moveInput.y * carStats.MaxPowerNM;
-                wheels[i].collider.brakeTorque = !SpacebarPressed ? 0 : 1000;
-            } else
-            {
-                //front wheels
-                wheels[i].collider.motorTorque = moveInput.y * carStats.MaxPowerNM;
-            }
-        }
+        TranslatePowertoWheels();
 
         for (int i = 0; i < wheels.Length; i++)
         {
@@ -84,7 +69,7 @@ public class CarController : MonoBehaviour
 
     void HandleSteering ()
     {
-        maxSteer = carStats.MaxSteerAngle + Mathf.Clamp(steeringModifier, 0, 10);
+        maxSteer = stats.MaxSteerAngle + Mathf.Clamp(steeringModifier, 0, 10);
 
         if(moveInput.x > 0)
         {
@@ -103,6 +88,49 @@ public class CarController : MonoBehaviour
         }
 
         steeringModifier = rb.linearVelocity.magnitude * steerReducingMultiplier;
+
+    }
+
+    public void setSpacebarPressed(bool _moveInput)
+    {
+        isSpacebarPressed = _moveInput;
+    }
+
+    public void TranslatePowertoWheels()
+    {
+
+        switch (stats.driveMode)
+        {
+            case driveMode.frontWheelDrive:
+                wheels[0].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
+                wheels[1].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
+                break;
+            case driveMode.rearWheelDrive:
+                wheels[2].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                wheels[3].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                break;
+            case driveMode.allWheelDrive:
+                for (int i = 0; i < wheels.Length; i++)
+                {
+                    if (i > 1)
+                    {
+                        // rear wheel
+                        wheels[i].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                        //wheels[i].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
+                    }
+                    else
+                    {
+                        wheels[i].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
+
+                        //fron wheels for now
+                    }
+                }
+                break;
+        }
+
+        wheels[2].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
+        wheels[3].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
+
 
     }
 }
