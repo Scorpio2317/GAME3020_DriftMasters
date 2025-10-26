@@ -7,20 +7,25 @@ using static UnityEditor.Progress;
 public class CarController : MonoBehaviour
 {
     public CarStats carStats;
-
+    public Rigidbody rb;
     public Wheel[] wheels;
     public float maxSteer = 30, wheelBase = 2.5f, trackWidth = 1.5f;
+    public float steeringModifier = 1;
 
     #region common
 
     private Vector2 moveInput;
     public float wheelTurnLerpSpeed = 1;
     public bool SpacebarPressed;
+
     #endregion
+
+    [Range(0.05f, 1f)] public float steerReducingMultiplier = 0.3f;
 
     void Start()
     {
-        carStats = transform.GetComponent<CarStats>();
+        carStats = GetComponent<CarStats>();
+        rb = GetComponent<Rigidbody>();
     }
 
     public void OnMove(InputValue value)
@@ -36,11 +41,12 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        SpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
-
 
         if (!carStats)
             return;
+
+        SpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
+        HandleSteering();
 
         for (int i = 0; i < wheels.Length; i++)
         {
@@ -54,23 +60,6 @@ public class CarController : MonoBehaviour
                 //front wheels
                 wheels[i].collider.motorTorque = moveInput.y * carStats.MaxPowerNM;
             }
-        }
-
-
-        float steer = moveInput.x * maxSteer;
-        if (moveInput.x > 0)
-        {
-            wheels[0].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle, Mathf.Rad2Deg * Mathf.Atan(wheelBase / (trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase)), Time.deltaTime * wheelTurnLerpSpeed);
-            wheels[1].collider.steerAngle = Mathf.Lerp(wheels[1].collider.steerAngle, steer, Time.deltaTime * wheelTurnLerpSpeed);
-        }
-        else if (moveInput.x < 0)
-        {
-            wheels[0].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle, steer, Time.deltaTime * wheelTurnLerpSpeed);
-            wheels[1].collider.steerAngle = Mathf.Lerp(wheels[1].collider.steerAngle, Mathf.Rad2Deg * Mathf.Atan(wheelBase / (-trackWidth / 2 + Mathf.Tan(Mathf.Deg2Rad * steer) * wheelBase)), Time.deltaTime * wheelTurnLerpSpeed);
-        }
-        else
-        {
-            wheels[0].collider.steerAngle = wheels[1].collider.steerAngle = Mathf.Lerp(wheels[0].collider.steerAngle = wheels[1].collider.steerAngle, 0, Time.deltaTime * wheelTurnLerpSpeed);
         }
 
         for (int i = 0; i < wheels.Length; i++)
@@ -91,6 +80,30 @@ public class CarController : MonoBehaviour
             //wheels[i].collider.transform.position = Pos;
             //wheels[i].collider.transform.localRotation = Quaternion.Euler(0, wheels[i].collider.steerAngle, 0);
         }
+    }
+
+    void HandleSteering ()
+    {
+        maxSteer = carStats.MaxSteerAngle + Mathf.Clamp(steeringModifier, 0, 10);
+
+        if(moveInput.x > 0)
+        {
+            wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
+            wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
+        }
+        else if (moveInput.x < 0)
+        {
+            wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
+            wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
+        }
+        else
+        {
+            wheels[0].collider.steerAngle = 0;
+            wheels[1].collider.steerAngle = 0;
+        }
+
+        steeringModifier = rb.linearVelocity.magnitude * steerReducingMultiplier;
+
     }
 }
 
