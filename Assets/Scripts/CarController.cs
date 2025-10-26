@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.Progress;
 
 
 public class CarController : MonoBehaviour
@@ -14,7 +15,7 @@ public class CarController : MonoBehaviour
 
     private Vector2 moveInput;
     public float wheelTurnLerpSpeed = 1;
-
+    public bool SpacebarPressed;
     #endregion
 
     void Start()
@@ -28,16 +29,33 @@ public class CarController : MonoBehaviour
         moveInput = value.Get<Vector2>();
     }
 
+    public void OnJump(InputValue value)
+    {
+        SpacebarPressed = value.Get<float>() == 1; // this will set the spacebar pressed bool to true when input is 1
+    }
+
     void FixedUpdate()
     {
+        SpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
+
 
         if (!carStats)
             return;
 
-        foreach (var item in wheels)
+        for (int i = 0; i < wheels.Length; i++)
         {
-            item.collider.motorTorque = moveInput.y * carStats.MaxPowerNM;
+            if (i > 1)
+            {
+                //rear wheels
+                wheels[i].collider.motorTorque = SpacebarPressed ? 0 : moveInput.y * carStats.MaxPowerNM;
+                wheels[i].collider.brakeTorque = !SpacebarPressed ? 0 : 1000;
+            } else
+            {
+                //front wheels
+                wheels[i].collider.motorTorque = moveInput.y * carStats.MaxPowerNM;
+            }
         }
+
 
         float steer = moveInput.x * maxSteer;
         if (moveInput.x > 0)

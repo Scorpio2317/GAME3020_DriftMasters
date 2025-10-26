@@ -1726,6 +1726,7 @@ MonoBehaviour:
   wheelBase: 2.5
   trackWidth: 1.5
   wheelTurnLerpSpeed: 10
+  SpacebarPressed: 0
 --- !u!54 &755069547
 Rigidbody:
   m_ObjectHideFlags: 0
