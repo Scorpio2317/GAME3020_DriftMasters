@@ -4,97 +4,93 @@ using UnityEngine.InputSystem;
 
 public class CarController : MonoBehaviour
 {
-    public CarStats stats;
+    private CarStateMachine stateMachine;
+
     public Rigidbody rb;
-    public Wheel[] wheels;
+    public CarStats stats;
     public float maxSteer = 30, wheelBase = 2.5f, trackWidth = 1.5f;
     public float steeringModifier = 1;
 
     #region common
 
+    //inputs 
     private Vector2 moveInput;
-    public float wheelTurnLerpSpeed = 1;
     private bool isSpacebarPressed;
+    public float wheelTurnLerpSpeed = 1;
+
 
     #endregion
 
-    [Range(0.05f, 1f)] public float steerReducingMultiplier = 0.3f;
+
+    [Header("debug")]
+    [Range(0.05f, 1f)] public float steerReducingMultiplier = .3f; // use this to steer less when going quicker , prevent crashing
 
     void Start()
     {
+        stateMachine = GetComponent<CarStateMachine>();
         stats = GetComponent<CarStats>();
         rb = GetComponent<Rigidbody>();
     }
 
-    public void OnMove(InputValue value)
+    public void OnMove(InputValue input)
     {
-        //print(value.Get<Vector2>());
-        moveInput = value.Get<Vector2>();
+        moveInput = input.Get<Vector2>();
     }
 
-    public void OnJump(InputValue value)
+    public void OnJump(InputValue input)
     {
-        isSpacebarPressed = value.Get<float>() == 1; // this will set the spacebar pressed bool to true when input is 1
+
+        isSpacebarPressed = input.Get<float>() == 1;
+
     }
 
     void FixedUpdate()
     {
-
-        if (!stats)
+        if (!stats) 
             return;
 
-        isSpacebarPressed = Input.GetKey(KeyCode.Space); // this will set the spacebar bool to true depending on keypress space
+
+        isSpacebarPressed = Input.GetKey(KeyCode.Space);
+
+
         HandleSteering();
         TranslatePowertoWheels();
-
-        for (int i = 0; i < wheels.Length; i++)
-        {
-            Quaternion quaternion;
-            Vector3 Pos;
-            wheels[i].collider.GetWorldPose(out Pos, out quaternion);
-            //wheels[i].collider.transform.rotation = quaternion;
-
-            Transform[] childTransforms = new Transform[wheels[i].collider.transform.childCount];
-            int index = 0;
-            foreach (var item in childTransforms)
-            {
-                wheels[i].collider.transform.GetChild(index).position = Pos;
-                wheels[i].collider.transform.GetChild(index).rotation = quaternion;
-                index++;
-            }
-            //wheels[i].collider.transform.position = Pos;
-            //wheels[i].collider.transform.localRotation = Quaternion.Euler(0, wheels[i].collider.steerAngle, 0);
-        }
     }
 
-    void HandleSteering ()
+    void HandleSteering()
     {
+
         maxSteer = stats.MaxSteerAngle + Mathf.Clamp(steeringModifier, 0, 10);
 
-        if(moveInput.x > 0)
+        if (moveInput.x > 0)
         {
-            wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
-            wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
+            stateMachine.wheelColliders[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
+            stateMachine.wheelColliders[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
         }
         else if (moveInput.x < 0)
         {
-            wheels[0].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
-            wheels[1].collider.steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
+            stateMachine.wheelColliders[0].steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer + (trackWidth / 2))) * moveInput.x;
+            stateMachine.wheelColliders[1].steerAngle = Mathf.Rad2Deg * Mathf.Atan(wheelBase / (maxSteer - (trackWidth / 2))) * moveInput.x;
         }
         else
         {
-            wheels[0].collider.steerAngle = 0;
-            wheels[1].collider.steerAngle = 0;
+            stateMachine.wheelColliders[0].steerAngle = 0;
+            stateMachine.wheelColliders[1].steerAngle = 0;
         }
-
         steeringModifier = rb.linearVelocity.magnitude * steerReducingMultiplier;
-
     }
 
-    public void setSpacebarPressed(bool _moveInput)
+    // this is where we have setters
+    public void SetMoveinput(Vector2 _moveInput)
+    {
+        moveInput = _moveInput;
+    }
+
+    public void SetSpacebarPressed(bool _moveInput)
     {
         isSpacebarPressed = _moveInput;
     }
+
 
     public void TranslatePowertoWheels()
     {
@@ -102,34 +98,32 @@ public class CarController : MonoBehaviour
         switch (stats.driveMode)
         {
             case driveMode.frontWheelDrive:
-                wheels[0].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
-                wheels[1].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
+                stateMachine.wheelColliders[0].motorTorque = moveInput.y * stats.MaxPowerNM;
+                stateMachine.wheelColliders[1].motorTorque = moveInput.y * stats.MaxPowerNM;
                 break;
             case driveMode.rearWheelDrive:
-                wheels[2].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
-                wheels[3].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                stateMachine.wheelColliders[2].motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                stateMachine.wheelColliders[3].motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
                 break;
             case driveMode.allWheelDrive:
-                for (int i = 0; i < wheels.Length; i++)
+                for (int i = 0; i < stateMachine.wheelColliders.Length; i++)
                 {
                     if (i > 1)
                     {
                         // rear wheel
-                        wheels[i].collider.motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
+                        stateMachine.wheelColliders[i].motorTorque = isSpacebarPressed ? 0 : moveInput.y * stats.MaxPowerNM;
                         //wheels[i].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
                     }
                     else
                     {
-                        wheels[i].collider.motorTorque = moveInput.y * stats.MaxPowerNM;
-
+                        stateMachine.wheelColliders[i].motorTorque = moveInput.y * stats.MaxPowerNM;
                         //fron wheels for now
                     }
                 }
                 break;
         }
-
-        wheels[2].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
-        wheels[3].collider.brakeTorque = !isSpacebarPressed ? 0 : 1000;
+        stateMachine.wheelColliders[2].brakeTorque = !isSpacebarPressed ? 0 : 1000;
+        stateMachine.wheelColliders[3].brakeTorque = !isSpacebarPressed ? 0 : 1000;
 
 
     }
@@ -137,15 +131,13 @@ public class CarController : MonoBehaviour
 
 
 [System.Serializable]
-public class Wheel
-{
-    public WheelCollider collider;
-    public WheelType wheelType;
-}
-
-
-[System.Serializable]
 public enum WheelType
 {
     front, rear
+}
+
+[System.Serializable]
+public enum Playertype
+{
+    player, npc
 }
