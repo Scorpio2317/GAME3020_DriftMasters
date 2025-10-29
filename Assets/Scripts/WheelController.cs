@@ -43,26 +43,41 @@ public class WheelController : MonoBehaviour {
         float steerX = moveInput.x;
         float gasY = moveInput.y;
 
+        // steering
         float targetSteerDeg = steerSign * wheelSteeringAngle * steerX;
         foreach (var wa in steerWheels)
-        {
             wa.steeringAngle = Mathf.LerpAngle(wa.steeringAngle, targetSteerDeg, Time.deltaTime * wheelRotateSpeed);
-        }
+
+        // signed speed along car forward (m/s)
+        float signedSpeed = RB ? Vector3.Dot(RB.linearVelocity, transform.forward) : 0f;
 
         float targetTorque = 0f;
         float brake = 0f;
 
+        // --- FORWARD ---
         if (gasY > 0f)
         {
-            targetTorque = forwardTorqueSign * wheelMaxTorque * gasY;
+            targetTorque = forwardTorqueSign * wheelMaxTorque * gasY; // positive torque
             brake = 0f;
-            if (RB) RB.linearDamping = 0f;
+            if (RB) RB.linearDamping = 0f; // was linearDamping
         }
+        // --- REVERSE / BRAKE ---
         else if (gasY < 0f)
         {
-            targetTorque = 0f;
-            brake = Mathf.Abs(gasY) * wheelMaxTorque * BreakPower;
-            if (RB) RB.linearDamping = brakeDamping;
+            // If still rolling forward fast, brake first
+            if (signedSpeed > 0.5f)
+            {
+                targetTorque = 0f;
+                brake = Mathf.Abs(gasY) * wheelMaxTorque * BreakPower;
+                if (RB) RB.linearDamping = brakeDamping; // was linearDamping
+            }
+            else
+            {
+                // apply negative torque to reverse, no brake
+                targetTorque = forwardTorqueSign * wheelMaxTorque * gasY; // gasY is negative -> reverse torque
+                brake = 0f;
+                if (RB) RB.linearDamping = 0f;
+            }
         }
         else
         {
@@ -70,14 +85,14 @@ public class WheelController : MonoBehaviour {
             if (RB) RB.linearDamping = 0f;
         }
 
+        // Apply to drive wheels
         foreach (var wa in driveWheels)
         {
             var col = wa.wheelCol;
-
             col.brakeTorque = brake;
 
             float curr = col.motorTorque;
-            float to = (Mathf.Approximately(gasY, 0f)) ? 0f : targetTorque;
+            float to = Mathf.Approximately(gasY, 0f) ? 0f : targetTorque;
             float step = wheelMaxTorque * Time.deltaTime * wheelAcceleration;
 
             col.motorTorque = Mathf.MoveTowards(curr, to, step);
