@@ -3,13 +3,13 @@ using UnityEngine.InputSystem;
 
 public class WheelController : MonoBehaviour {
 
-    [Header("Steer & Drive")]
+    [Header("Steer & Drive Lists")]
     public WheelAlignment[] steerWheels;
     public WheelAlignment[] driveWheels;
 
     [Header("Steer")]
-    public float wheelRotateSpeed = 8f;
     public float wheelSteeringAngle = 25f;
+    public float wheelRotateSpeed = 8f;
     public int steerSign = 1;
 
     [Header("Drive")]
@@ -21,82 +21,93 @@ public class WheelController : MonoBehaviour {
     public float BreakPower = 1.0f;
     public float brakeDamping = 0.3f;
 
+    [Header("Handbrake")]
+    public float handbrakeBrakeTorque = 800f;
+
     [Header("Input")]
     [Range(0f, 0.5f)] public float deadzone = 0.12f;
+    private bool isSpacebarPressed;
 
-    public Rigidbody RB;
+    [Header("References")]
+    public Rigidbody rb;
 
     private Vector2 moveInput;
+    private bool handbrake;
 
-    public void OnMove(UnityEngine.InputSystem.InputValue input)
+    public void OnMove(InputValue input)
     {
         Vector2 raw = input.Get<Vector2>();
-        if (Mathf.Abs(raw.x) < deadzone) raw.x = 0f;
-        if (Mathf.Abs(raw.y) < deadzone) raw.y = 0f;
+        
+        if (Mathf.Abs(raw.x) < deadzone)
+            raw.x = 0f;
+        if (Mathf.Abs(raw.y) < deadzone)
+            raw.y = 0f;
+
         moveInput = raw;
     }
+    void Update()
+    {
+        if (Keyboard.current != null)
+            isSpacebarPressed = Keyboard.current.spaceKey.isPressed;
+    }
 
-    void Update() => WheelControl();
+    void FixedUpdate()
+    {
+        WheelControl();
+    }
 
     void WheelControl()
     {
         float steerX = moveInput.x;
         float gasY = moveInput.y;
 
-        // steering
         float targetSteerDeg = steerSign * wheelSteeringAngle * steerX;
-        foreach (var wa in steerWheels)
-            wa.steeringAngle = Mathf.LerpAngle(wa.steeringAngle, targetSteerDeg, Time.deltaTime * wheelRotateSpeed);
+        for (int i = 0; i < steerWheels.Length; i++)
+        {
+            var wa = steerWheels[i];
+            var col = wa.wheelCol;
+            if (!col) continue;
 
-        // signed speed along car forward (m/s)
-        float signedSpeed = RB ? Vector3.Dot(RB.linearVelocity, transform.forward) : 0f;
+            float newAngle = Mathf.LerpAngle(col.steerAngle, targetSteerDeg, Time.fixedDeltaTime * wheelRotateSpeed);
+            col.steerAngle = newAngle;
+            wa.steeringAngle = newAngle;
+        }
 
         float targetTorque = 0f;
         float brake = 0f;
 
-        // --- FORWARD ---
         if (gasY > 0f)
         {
-            targetTorque = forwardTorqueSign * wheelMaxTorque * gasY; // positive torque
+            targetTorque = forwardTorqueSign * wheelMaxTorque * gasY;
             brake = 0f;
-            if (RB) RB.linearDamping = 0f; // was linearDamping
+            if (rb) rb.linearDamping = 0f;
         }
-        // --- REVERSE / BRAKE ---
         else if (gasY < 0f)
         {
-            // If still rolling forward fast, brake first
-            if (signedSpeed > 0.5f)
-            {
-                targetTorque = 0f;
-                brake = Mathf.Abs(gasY) * wheelMaxTorque * BreakPower;
-                if (RB) RB.linearDamping = brakeDamping; // was linearDamping
-            }
-            else
-            {
-                // apply negative torque to reverse, no brake
-                targetTorque = forwardTorqueSign * wheelMaxTorque * gasY; // gasY is negative -> reverse torque
-                brake = 0f;
-                if (RB) RB.linearDamping = 0f;
-            }
+            targetTorque = -forwardTorqueSign * wheelMaxTorque * Mathf.Abs(gasY) * BreakPower;
+            brake = 0f;
+            if (rb) rb.linearDamping = brakeDamping;
         }
         else
         {
             brake = 0f;
-            if (RB) RB.linearDamping = 0f;
+            if (rb) rb.linearDamping = 0f;
         }
 
-        // Apply to drive wheels
-        foreach (var wa in driveWheels)
+        float step = wheelMaxTorque * Time.fixedDeltaTime * wheelAcceleration;
+        float hb = isSpacebarPressed ? handbrakeBrakeTorque : 0f;
+
+        for (int i = 0; i < driveWheels.Length; i++)
         {
+            var wa = driveWheels[i];
             var col = wa.wheelCol;
-            col.brakeTorque = brake;
+            if (!col) continue;
 
-            float curr = col.motorTorque;
-            float to = Mathf.Approximately(gasY, 0f) ? 0f : targetTorque;
-            float step = wheelMaxTorque * Time.deltaTime * wheelAcceleration;
+            col.brakeTorque = brake + hb;
 
-            col.motorTorque = Mathf.MoveTowards(curr, to, step);
+            float current = col.motorTorque;
+            float to = (Mathf.Approximately(gasY, 0f)) ? 0f : targetTorque;
+            col.motorTorque = Mathf.MoveTowards(current, to, step);
         }
     }
-
 }

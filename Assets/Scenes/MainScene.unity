@@ -1431,7 +1431,7 @@ MonoBehaviour:
   wheelGraphic: {fileID: 1013283625}
   wheelCol: {fileID: 5462462}
   steerable: 1
-  steeringAngle: 0
+  steeringAngle: 30
 --- !u!4 &1036799808 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 439116564045510396, guid: 4e0ba6b8ceb6f7b4eb6f4f977088b3a0, type: 3}
@@ -1705,7 +1705,7 @@ MonoBehaviour:
   wheelGraphic: {fileID: 1349596879}
   wheelCol: {fileID: 402183259}
   steerable: 1
-  steeringAngle: 0
+  steeringAngle: 30
 --- !u!1 &1428308446
 GameObject:
   m_ObjectHideFlags: 0

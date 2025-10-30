@@ -4,41 +4,21 @@ using UnityEngine;
 
 public class WheelAlignment : MonoBehaviour {
 
-    public GameObject wheelBase;
+    [Header("Links")]
     public GameObject wheelGraphic;
-
     public WheelCollider wheelCol;
 
-    public bool steerable;
+    public bool steerable = false;
+    [HideInInspector] public float steeringAngle;
 
-    public float steeringAngle;
-
-    RaycastHit hit;
-	
-	// Update is called once per frame
-	void Update ()
+    void LateUpdate()
     {
-        AlignMeshToCollider();
-	}
+        if (!wheelCol || !wheelGraphic) return;
 
-    //Rotates graphical wheel and updates its position
-    void AlignMeshToCollider()
-    {
-        if (Physics.Raycast(wheelCol.transform.position, -wheelCol.transform.up, out hit, wheelCol.suspensionDistance + wheelCol.radius))
-        {
-            wheelGraphic.transform.position = hit.point + wheelCol.transform.up *  wheelCol.radius;
-        }
-        else
-        {
-            wheelGraphic.transform.position = wheelCol.transform.position - (wheelCol.transform.up * wheelCol.suspensionDistance);
-        }
+        Vector3 pos;
+        Quaternion rot;
+        wheelCol.GetWorldPose(out pos, out rot);
 
-        if (steerable)
-        {
-            wheelCol.steerAngle = steeringAngle;
-        }
-
-        wheelGraphic.transform.eulerAngles = new Vector3(wheelBase.transform.eulerAngles.x, wheelBase.transform.eulerAngles.y + wheelCol.steerAngle, wheelBase.transform.eulerAngles.z);
-        wheelGraphic.transform.Rotate(wheelCol.rpm / 60 * 360 * Time.deltaTime, 0, 0);
+        wheelGraphic.transform.SetPositionAndRotation(pos, rot);
     }
 }
