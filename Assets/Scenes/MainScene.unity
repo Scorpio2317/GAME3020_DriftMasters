@@ -1046,16 +1046,17 @@ MonoBehaviour:
   driveWheels:
   - {fileID: 641168505}
   - {fileID: 1173436734}
-  wheelRotateSpeed: 8
   wheelSteeringAngle: 25
+  wheelRotateSpeed: 8
   steerSign: 1
   wheelAcceleration: 8
   wheelMaxTorque: 1500
   forwardTorqueSign: 1
   BreakPower: 1
   brakeDamping: 0.3
+  handbrakeBrakeTorque: 800
   deadzone: 0.12
-  RB: {fileID: 591581897}
+  rb: {fileID: 0}
 --- !u!54 &591581897 stripped
 Rigidbody:
   m_CorrespondingSourceObject: {fileID: 8094709869695254943, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
@@ -1077,6 +1078,23 @@ MonoBehaviour:
   emitHoldSeconds: 0.25
   handbrakeKey: 32
   handbrakeBrakeTorque: 2000
+--- !u!114 &591581905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 591581889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cf40389ac35960459d4d88608b81538, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rb: {fileID: 0}
+  saveInterval: 2
+  uprightDotThreshold: 0.3
+  autoFlipDelay: 2
+  keyboardRespawnKey: 114
 --- !u!1 &641168503 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8470857444631454049, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
@@ -1094,7 +1112,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bab8821d774d01440be4afe24c442adc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheelBase: {fileID: 591581889}
   wheelGraphic: {fileID: 641168503}
   wheelCol: {fileID: 1474941142}
   steerable: 0
@@ -1397,6 +1414,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1513568464403689809, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
       insertIndex: 3
       addedObject: {fileID: 591581898}
+    - targetCorrespondingSourceObject: {fileID: 1513568464403689809, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
+      insertIndex: 4
+      addedObject: {fileID: 591581905}
     - targetCorrespondingSourceObject: {fileID: 8243927322797715067, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1013283627}
@@ -1427,7 +1447,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bab8821d774d01440be4afe24c442adc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheelBase: {fileID: 591581889}
   wheelGraphic: {fileID: 1013283625}
   wheelCol: {fileID: 5462462}
   steerable: 1
@@ -1679,7 +1698,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bab8821d774d01440be4afe24c442adc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheelBase: {fileID: 591581889}
   wheelGraphic: {fileID: 1173436732}
   wheelCol: {fileID: 251091084}
   steerable: 0
@@ -1701,7 +1719,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bab8821d774d01440be4afe24c442adc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wheelBase: {fileID: 591581889}
   wheelGraphic: {fileID: 1349596879}
   wheelCol: {fileID: 402183259}
   steerable: 1
