@@ -837,8 +837,8 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: GAME3020_DriftMasters
-  metroPackageVersion: 
+  metroPackageName: GAME3020DriftMasters
+  metroPackageVersion: 1.0.0.0
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
@@ -846,7 +846,7 @@ PlayerSettings:
   metroCertificateNotAfter: 0000000000000000
   metroApplicationDescription: GAME3020_DriftMasters
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: GAME3020_DriftMasters
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0
