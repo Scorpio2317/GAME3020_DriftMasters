@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cf91c494f6bfbe34bbf33d6d8a5a8baa
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 326960
+  packageName: Mountain Track
+  packageVersion: 1.0
+  assetPath: Assets/Mountain Tracks/Materials/Grass.mat
+  uploadId: 775304
