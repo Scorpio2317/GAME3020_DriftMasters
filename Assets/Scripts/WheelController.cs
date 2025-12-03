@@ -16,10 +16,12 @@ public class WheelController : MonoBehaviour {
     public float wheelAcceleration = 8f;
     public float wheelMaxTorque = 1500f;
     public int forwardTorqueSign = 1;
+    public float maxSpeed = 150f;
 
     [Header("Brake/Reverse")]
-    public float BreakPower = 1.0f;
-    public float brakeDamping = 0.3f;
+    public float brakePower = 3000f;
+    public float brakeDamping = 0.8f;
+    public float reverseTorqueMultiplier = 0.5f;
 
     [Header("Handbrake")]
     public float handbrakeBrakeTorque = 800f;
@@ -54,6 +56,18 @@ public class WheelController : MonoBehaviour {
     void FixedUpdate()
     {
         WheelControl();
+        LimitSpeed();
+    }
+
+    void LimitSpeed()
+    {
+        if (!rb) return;
+
+        float currentSpeed = rb.linearVelocity.magnitude * 3.6f;
+        if (currentSpeed > maxSpeed)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * (maxSpeed / 3.6f);
+        }
     }
 
     void WheelControl()
@@ -61,6 +75,13 @@ public class WheelController : MonoBehaviour {
         float steerX = moveInput.x;
         float gasY = moveInput.y;
 
+        float forwardSpeed = 0f;
+        if (rb)
+        {
+            forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
+        }
+
+        // Steering
         float targetSteerDeg = steerSign * wheelSteeringAngle * steerX;
         for (int i = 0; i < steerWheels.Length; i++)
         {
@@ -76,22 +97,34 @@ public class WheelController : MonoBehaviour {
         float targetTorque = 0f;
         float brake = 0f;
 
+        // Forward acceleration
         if (gasY > 0f)
         {
             targetTorque = forwardTorqueSign * wheelMaxTorque * gasY;
             brake = 0f;
-            if (rb) rb.linearDamping = 0f;
+            if (rb) rb.linearDamping = 0.05f;
         }
+        // Braking or Reverse
         else if (gasY < 0f)
         {
-            targetTorque = -forwardTorqueSign * wheelMaxTorque * Mathf.Abs(gasY) * BreakPower;
-            brake = 0f;
-            if (rb) rb.linearDamping = brakeDamping;
+            if (forwardSpeed > 1f)
+            {
+                brake = brakePower * Mathf.Abs(gasY);
+                targetTorque = 0f;
+                if (rb) rb.linearDamping = brakeDamping;
+            }
+            else
+            {
+                targetTorque = -forwardTorqueSign * wheelMaxTorque * Mathf.Abs(gasY) * reverseTorqueMultiplier;
+                brake = 0f;
+                if (rb) rb.linearDamping = 0.05f;
+            }
         }
         else
         {
+            targetTorque = 0f;
             brake = 0f;
-            if (rb) rb.linearDamping = 0f;
+            if (rb) rb.linearDamping = 0.05f;
         }
 
         float step = wheelMaxTorque * Time.fixedDeltaTime * wheelAcceleration;
@@ -108,6 +141,29 @@ public class WheelController : MonoBehaviour {
             float current = col.motorTorque;
             float to = (Mathf.Approximately(gasY, 0f)) ? 0f : targetTorque;
             col.motorTorque = Mathf.MoveTowards(current, to, step);
+        }
+
+        if (brake > 0f)
+        {
+            for (int i = 0; i < steerWheels.Length; i++)
+            {
+                var wa = steerWheels[i];
+                var col = wa.wheelCol;
+                if (!col) continue;
+
+                col.brakeTorque = brake;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < steerWheels.Length; i++)
+            {
+                var wa = steerWheels[i];
+                var col = wa.wheelCol;
+                if (!col) continue;
+
+                col.brakeTorque = 0f;
+            }
         }
     }
 }
