@@ -23,6 +23,8 @@ public class DriftScoring : MonoBehaviour
     private float comboTimer = 0f;
     private bool isDrifting = false;
 
+    public float TotalScore => totalScore;
+
     private void Start()
     {
         UpdateScoreDisplay();

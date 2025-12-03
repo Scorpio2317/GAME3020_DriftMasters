@@ -11,6 +11,8 @@ public class LapTimer : MonoBehaviour
     private float currentTime = 0f;
     private bool isRacing = true;
 
+    public float CurrentTime => currentTime;
+
     private void Update()
     {
         if (isRacing)
@@ -18,6 +20,11 @@ public class LapTimer : MonoBehaviour
             currentTime += Time.deltaTime;
             UpdateTimerDisplay();
         }
+    }
+
+    public void StopTimer()
+    {
+        isRacing = false;
     }
 
     private void UpdateTimerDisplay()
