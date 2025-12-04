@@ -20,7 +20,7 @@ public class WheelController : MonoBehaviour {
 
     [Header("Brake/Reverse")]
     public float brakePower = 3000f;
-    public float brakeDamping = 0.8f;
+    public float brakeDamping = 2f;
     public float reverseTorqueMultiplier = 0.5f;
 
     [Header("Handbrake")]
