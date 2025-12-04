@@ -901,6 +901,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GTR35 (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8700174505665324668, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
+      propertyPath: m_Volume
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9064456864176574930, guid: 39cf0b715b83b914da89f3f816aae24f, type: 3}
       propertyPath: comboText
       value: 

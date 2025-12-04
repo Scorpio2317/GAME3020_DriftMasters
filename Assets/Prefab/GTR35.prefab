@@ -622,12 +622,12 @@ MonoBehaviour:
   wheelMaxTorque: 1200
   forwardTorqueSign: 1
   maxSpeed: 150
-  brakePower: 5000
+  brakePower: 1500
   brakeDamping: 1
   reverseTorqueMultiplier: 0.5
   handbrakeBrakeTorque: 800
   deadzone: 0.12
-  rb: {fileID: 0}
+  rb: {fileID: 8094709869695254943}
 --- !u!114 &8163065651681605096
 MonoBehaviour:
   m_ObjectHideFlags: 0
