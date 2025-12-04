@@ -14,29 +14,38 @@ public class CarEffects : MonoBehaviour
 
     [SerializeField] private float handbrakeBrakeTorque = 2000f;
 
-    private struct WheelTrailState
+    private struct WheelFx
     {
-        public WheelCollider Collider;
-        public TrailRenderer Trail;
-        public float EmitUntilTime;
+        public WheelCollider collider;
+        public TrailRenderer trail;
+        public ParticleSystem smoke;
+        public float emitUntilTime;
     }
 
-    private readonly List<WheelTrailState> wheelTrails = new();
+    private readonly List<WheelFx> wheels = new List<WheelFx>();
 
     private void Awake()
     {
-        foreach (var wheel in GetComponentsInChildren<WheelCollider>(true))
+        foreach (var col in GetComponentsInChildren<WheelCollider>(true))
         {
-            var trail = wheel.GetComponentInChildren<TrailRenderer>(true);
-            if (!trail) 
+            var trail = col.GetComponentInChildren<TrailRenderer>(true);
+            var smoke = col.GetComponentInChildren<ParticleSystem>(true);
+
+            if (trail == null && smoke == null)
                 continue;
 
-            trail.emitting = false;
-            wheelTrails.Add(new WheelTrailState
+            if (trail != null)
+                trail.emitting = false;
+
+            if (smoke != null)
+                smoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            wheels.Add(new WheelFx
             {
-                Collider = wheel,
-                Trail = trail,
-                EmitUntilTime = 0f
+                collider = col,
+                trail = trail,
+                smoke = smoke,
+                emitUntilTime = 0f
             });
         }
     }
@@ -45,40 +54,49 @@ public class CarEffects : MonoBehaviour
     {
         bool isHandbrakeDown = Input.GetKey(handbrakeKey);
 
-        for (int i = 0; i < wheelTrails.Count; i++)
+        for (int i = 0; i < wheels.Count; i++)
         {
-            var state = wheelTrails[i];
-            var wheel = state.Collider;
-            var trail = state.Trail;
+            var w = wheels[i];
+            var col = w.collider;
 
-            // Read contact + slip
-            bool isGrounded = wheel.GetGroundHit(out WheelHit hit);
+            bool isGrounded = col.GetGroundHit(out WheelHit hit);
             float slipMagnitude = isGrounded ? Mathf.Max(Mathf.Abs(hit.sidewaysSlip), Mathf.Abs(hit.forwardSlip)) : 0f;
 
-            // Decide whether this wheel should emit a trail this frame
             bool shouldEmitNow = isGrounded && (slipMagnitude > skidSlipThreshold || isHandbrakeDown);
 
             if (shouldEmitNow)
             {
-                if (!trail.emitting) trail.emitting = true;
-                state.EmitUntilTime = Time.time + emitHoldSeconds; // extend hold
-            }
-            else if (trail.emitting && Time.time >= state.EmitUntilTime)
-            {
-                trail.emitting = false; // stop only after the hold expires
-            }
+                w.emitUntilTime = Time.time + emitHoldSeconds;
 
-            // Applied strong brake only to rear wheels
-            if (isHandbrakeDown && wheel.transform.localPosition.z < 0f)
+                // Trails
+                if (w.trail != null && !w.trail.emitting)
+                    w.trail.emitting = true;
+
+                // Smoke
+                if (w.smoke != null && !w.smoke.isPlaying)
+                    w.smoke.Play();
+            }
+            else
             {
-                wheel.brakeTorque = handbrakeBrakeTorque;
+                if (Time.time >= w.emitUntilTime)
+                {
+                    if (w.trail != null && w.trail.emitting)
+                        w.trail.emitting = false;
+
+                    if (w.smoke != null && w.smoke.isPlaying)
+                        w.smoke.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                }
+            }
+            if (isHandbrakeDown && col.transform.localPosition.z < 0f)
+            {
+                col.brakeTorque = handbrakeBrakeTorque;
             }
             else if (!isHandbrakeDown)
             {
-                wheel.brakeTorque = 0f;
+                col.brakeTorque = 0f;
             }
 
-            wheelTrails[i] = state; // write back
+            wheels[i] = w;
         }
     }
 }
